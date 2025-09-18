@@ -70,11 +70,15 @@ async function postPrice(price) {
 
     if (data.messageId) {
       // Update existing Discord message
-      await fetch(`${WEBHOOK_URL}/messages/${data.messageId}`, {
+      const res = await fetch(`${WEBHOOK_URL}/messages/${data.messageId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
+      try {
+        const json = await res.json();
+        if (json.id) data.messageId = json.id;
+      } catch { /* ignore empty response */ }
     } else {
       // Post new Discord message
       const res = await fetch(WEBHOOK_URL, {
@@ -82,10 +86,13 @@ async function postPrice(price) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
       });
-      const json = await res.json();
-      data.messageId = json.id;
+      try {
+        const json = await res.json();
+        if (json.id) data.messageId = json.id;
+      } catch { /* ignore empty response */ }
     }
 
+    // Save last price
     data.previousPrice = price;
     saveData();
     console.log("Price updated:", content);
@@ -101,8 +108,11 @@ async function pollPrice() {
     const rawPrice = await contract.getPrice();
     const price = parseFloat(ethers.formatUnits(rawPrice, 18));
 
-    if (price !== data.previousPrice) {
-      await postPrice(price);
+    // Round to 4 decimals to avoid micro-fluctuation triggers
+    const roundedPrice = parseFloat(price.toFixed(4));
+
+    if (roundedPrice !== data.previousPrice) {
+      await postPrice(roundedPrice);
     }
   } catch (err) {
     console.error("Error fetching price from contract:", err);
@@ -112,4 +122,4 @@ async function pollPrice() {
 // Start polling
 console.log("Bot started. Polling SPLOSH price every 30 seconds...");
 setInterval(pollPrice, POLL_INTERVAL);
-pollPrice(); // initial call immediately
+pollPrice(); // initial immediate call
