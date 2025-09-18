@@ -21,8 +21,8 @@ const abi = [
 const contract = new ethers.Contract(contractAddress, abi, provider);
 const iface = new ethers.Interface(abi);
 
-// ✅ ethers v6 fix
-const priceSettingFragment = iface.getFunction("Price_setting");
+// ✅ ethers v6 fix: use full function signature
+const priceSettingFragment = iface.getFunction("Price_setting(uint256)");
 const priceSettingSig = priceSettingFragment.selector;
 
 // ---------- LOAD OR INIT DATA ----------
@@ -96,6 +96,7 @@ provider.on({ address: contractAddress }, async (log) => {
 });
 
 console.log("Listening for Price_setting calls...");
+
 
 
 
