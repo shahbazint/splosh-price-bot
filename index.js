@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import fs from "fs";
 
 // ---------- CONFIG ----------
-const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC_URL);
+const provider = new ethers.WebSocketProvider(process.env.POLYGON_RPC_URL);
 const contractAddress = "0x7F9090e31F720F6A8c0B23239b9a548e0B65D2f2";
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 const DATA_FILE = "./price_data.json";
@@ -102,3 +102,4 @@ provider.on({ address: contractAddress }, async (log) => {
 });
 
 console.log("Listening for Price_setting calls...");
+
