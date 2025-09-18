@@ -20,8 +20,10 @@ const abi = [
 
 const contract = new ethers.Contract(contractAddress, abi, provider);
 const iface = new ethers.Interface(abi);
+
+// ✅ ethers v6 fix
 const priceSettingFragment = iface.getFunction("Price_setting");
-const priceSettingSig = iface.getSighash(priceSettingFragment);
+const priceSettingSig = priceSettingFragment.selector;
 
 // ---------- LOAD OR INIT DATA ----------
 let data = { previousPrice: null, messageId: null, last24hPrice: null, last24hTimestamp: null };
@@ -94,5 +96,6 @@ provider.on({ address: contractAddress }, async (log) => {
 });
 
 console.log("Listening for Price_setting calls...");
+
 
 
