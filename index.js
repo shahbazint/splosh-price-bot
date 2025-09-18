@@ -16,13 +16,6 @@ const abi = [
     "stateMutability": "view",
     "type": "function"
   },
-  {
-    "inputs": [{ "internalType": "uint256", "name": "token_rate", "type": "uint256" }],
-    "name": "Price_setting",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  }
 ];
 
 const contract = new ethers.Contract(contractAddress, abi, provider);
@@ -100,3 +93,4 @@ provider.on({ address: contractAddress }, async (log) => {
 });
 
 console.log("Listening for Price_setting calls...");
+
