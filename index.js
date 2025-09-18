@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import fs from "fs";
 
-const POLYGON_RPC = process.env.POLYGON_RPC_URL;
+const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC_URL);
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 const contractAddress = "0x7F9090e31F720F6A8c0B23239b9a548e0B65D2f2";
 const DATA_FILE = "./price_data.json";
@@ -104,3 +104,4 @@ async function startBot() {
 }
 
 startBot();
+
