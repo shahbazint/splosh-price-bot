@@ -16,14 +16,17 @@ const abi = [
     "stateMutability": "view",
     "type": "function"
   },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "token_rate", "type": "uint256" }],
+    "name": "Price_setting",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
 ];
 
 const contract = new ethers.Contract(contractAddress, abi, provider);
 const iface = new ethers.Interface(abi);
-
-// ✅ ethers v6 fix: use full function signature
-const priceSettingFragment = iface.getFunction("Price_setting(uint256)");
-const priceSettingSig = priceSettingFragment.selector;
 
 // ---------- LOAD OR INIT DATA ----------
 let data = { previousPrice: null, messageId: null, last24hPrice: null, last24hTimestamp: null };
@@ -38,7 +41,6 @@ function saveData() {
 }
 
 async function postPrice(price) {
-  // Trend calculation
   let trend = "⏺";
   let changePercent = 0;
   if (data.previousPrice !== null) {
@@ -46,7 +48,6 @@ async function postPrice(price) {
     trend = changePercent > 0 ? "⬆" : changePercent < 0 ? "⬇" : "⏺";
   }
 
-  // True 24h change
   const now = Date.now();
   let change24hPercent = 0;
   if (!data.last24hPrice || !data.last24hTimestamp || now - data.last24hTimestamp > 24*60*60*1000) {
@@ -60,14 +61,14 @@ async function postPrice(price) {
 
   try {
     if (data.messageId) {
-      // Update message
+      // Update existing Discord message
       await fetch(`${WEBHOOK_URL}/messages/${data.messageId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content })
       });
     } else {
-      // Post new message
+      // Post new Discord message
       const res = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,17 +87,18 @@ async function postPrice(price) {
   }
 }
 
-// ---------- LISTEN FOR PRICE_SETTING CALLS ----------
+// ---------- LISTEN FOR PRICE_SETTING LOGS ----------
 provider.on({ address: contractAddress }, async (log) => {
-  if (log.topics[0] === priceSettingSig) {
-    const newPrice = parseFloat(ethers.formatUnits(await contract.getPrice(), 18));
-    await postPrice(newPrice);
-    console.log("Detected Price_setting call, new price:", newPrice);
+  try {
+    const parsed = iface.parseLog(log);
+    if (parsed.name === "Price_setting") {
+      const newPrice = parseFloat(ethers.formatUnits(await contract.getPrice(), 18));
+      await postPrice(newPrice);
+      console.log("Detected Price_setting call, new price:", newPrice);
+    }
+  } catch (err) {
+    // Ignore logs that don't match events
   }
 });
 
 console.log("Listening for Price_setting calls...");
-
-
-
-
